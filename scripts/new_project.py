@@ -7,8 +7,25 @@ import sys
 from pathlib import Path
 
 import questionary
+from questionary import Style
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
 
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
+
+console = Console()
+
+STYLE = Style([
+    ("qmark", "fg:#00d7ff bold"),
+    ("question", "bold"),
+    ("answer", "fg:#00d7ff bold"),
+    ("pointer", "fg:#00d7ff bold"),
+    ("highlighted", "fg:#00d7ff bold"),
+    ("selected", "fg:#00d7ff"),
+    ("separator", "fg:#555555"),
+    ("instruction", "fg:#555555"),
+])
 
 
 def run(cmd: list[str], cwd: Path | None = None) -> None:
@@ -16,7 +33,6 @@ def run(cmd: list[str], cwd: Path | None = None) -> None:
 
 
 def copy_template(template_dir: Path, dest: Path) -> None:
-    """Copy template into dest, skipping existing files."""
     for src in template_dir.rglob("*"):
         rel = src.relative_to(template_dir)
         dst = dest / rel
@@ -34,18 +50,20 @@ def git_init_commit(project_dir: Path, lang: str) -> None:
     try:
         run(["git", "commit", "-q", "-m", f"chore: init {lang} project from template"], cwd=project_dir)
     except subprocess.CalledProcessError:
-        pass  # nothing to commit
+        pass
 
 
 def setup_python(project_dir: Path) -> None:
-    if not questionary.confirm("Initialize uv environment?", default=True).ask():
+    if not questionary.confirm("Initialize uv environment?", default=True, style=STYLE).ask():
         return
     if not shutil.which("uv"):
-        print("Error: uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh")
+        console.print("[red]Error:[/red] uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh")
         sys.exit(1)
-    run(["uv", "init", "--no-readme", "-q"], cwd=project_dir)
-    run(["uv", "venv", "-q"], cwd=project_dir)
-    print("  uv environment created (.venv)")
+    with console.status("[cyan]Setting up uv environment...[/cyan]"):
+        if not (project_dir / "pyproject.toml").exists():
+            run(["uv", "init", "--no-readme", "-q"], cwd=project_dir)
+        run(["uv", "venv", "-q"], cwd=project_dir)
+    console.print("  [green]✓[/green] uv environment created [dim](.venv)[/dim]")
 
 
 LANG_SETUP = {
@@ -54,18 +72,26 @@ LANG_SETUP = {
 
 
 def main() -> None:
+    console.print(Panel(
+        Text("new-project", style="bold cyan", justify="center"),
+        subtitle="[dim]project initializer[/dim]",
+        border_style="cyan",
+        padding=(0, 4),
+    ))
+
     langs = sorted(p.name for p in TEMPLATES_DIR.iterdir() if p.is_dir())
     if not langs:
-        print("No templates found.")
+        console.print("[red]No templates found.[/red]")
         sys.exit(1)
 
-    lang = questionary.select("Select language", choices=langs).ask()
+    lang = questionary.select("Select language", choices=langs, style=STYLE).ask()
     if not lang:
         sys.exit(0)
 
     mode = questionary.select(
         "Where to initialize?",
         choices=["New subdirectory", "Current directory"],
+        style=STYLE,
     ).ask()
     if not mode:
         sys.exit(0)
@@ -73,24 +99,29 @@ def main() -> None:
     cwd = Path.cwd()
 
     if mode == "New subdirectory":
-        name = questionary.text("Project name").ask()
+        name = questionary.text("Project name", style=STYLE).ask()
         if not name:
             sys.exit(0)
         project_dir = cwd / name
         if project_dir.exists():
-            print(f"Error: '{project_dir}' already exists")
+            console.print(f"[red]Error:[/red] '{project_dir}' already exists")
             sys.exit(1)
         project_dir.mkdir()
     else:
         project_dir = cwd
 
-    copy_template(TEMPLATES_DIR / lang, project_dir)
+    with console.status("[cyan]Copying template...[/cyan]"):
+        copy_template(TEMPLATES_DIR / lang, project_dir)
+    console.print("  [green]✓[/green] Template copied")
 
     if lang in LANG_SETUP:
         LANG_SETUP[lang](project_dir)
 
-    git_init_commit(project_dir, lang)
-    print(f"\nDone. Project ready at: {project_dir}")
+    with console.status("[cyan]Initializing git...[/cyan]"):
+        git_init_commit(project_dir, lang)
+    console.print("  [green]✓[/green] Git initialized")
+
+    console.print(f"\n[bold green]Done![/bold green] Project ready at: [cyan]{project_dir}[/cyan]")
 
 
 if __name__ == "__main__":
