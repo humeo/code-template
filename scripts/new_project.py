@@ -66,8 +66,37 @@ def setup_python(project_dir: Path) -> None:
     console.print("  [green]✓[/green] uv environment created [dim](.venv)[/dim]")
 
 
+def setup_typescript(project_dir: Path) -> None:
+    if not shutil.which("bun"):
+        console.print("[red]Error:[/red] bun not found. Install: curl -fsSL https://bun.sh/install | bash")
+        sys.exit(1)
+    with console.status("[cyan]Initializing bun project...[/cyan]"):
+        run(["bun", "init", "-y"], cwd=project_dir)
+        run(["bun", "add", "-d", "typescript", "@types/node"], cwd=project_dir)
+    console.print("  [green]✓[/green] bun project initialized")
+    console.print("  [green]✓[/green] typescript + @types/node installed")
+
+
+def setup_go(project_dir: Path) -> None:
+    if not shutil.which("go"):
+        console.print("[red]Error:[/red] go not found. Install: https://go.dev/dl")
+        sys.exit(1)
+    module = questionary.text(
+        "Go module name",
+        default=f"github.com/user/{project_dir.name}",
+        style=STYLE,
+    ).ask()
+    if not module:
+        return
+    with console.status("[cyan]Initializing go module...[/cyan]"):
+        run(["go", "mod", "init", module], cwd=project_dir)
+    console.print(f"  [green]✓[/green] go module initialized [dim]({module})[/dim]")
+
+
 LANG_SETUP = {
     "python": setup_python,
+    "typescript": setup_typescript,
+    "go": setup_go,
 }
 
 

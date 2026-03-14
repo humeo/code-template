@@ -1,0 +1,33 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build output
+/bin/
+/dist/
+
+# Test cache
+/tmp/
+
+# Go workspace
+go.work
+go.work.sum
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vendor (uncomment if vendoring)
+# vendor/
