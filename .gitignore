@@ -1,4 +1,19 @@
+# AI tools
 .codex/
 openspec/
-.claude/skills/openspec*/
-.claude/commands/opsx/
+.claude/
+.cursor/
+CLAUDE.md
+
+# Node
+node_modules/
+dist/
+
+# Python
+.venv/
+uv.lock
+.python-version
+__pycache__/
+
+# OS
+.DS_Store
