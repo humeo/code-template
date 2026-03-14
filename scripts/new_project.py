@@ -47,12 +47,12 @@ def copy_template(template_dir: Path, dest: Path) -> None:
 def setup_ai_dirs(project_dir: Path) -> None:
     tools = questionary.checkbox(
         "AI tool directories to create",
-        choices=AI_TOOLS,
-        instruction="(space to select, enter to confirm)",
+        choices=[questionary.Choice(t, checked=True) for t in AI_TOOLS],
+        instruction="(space to toggle, enter to confirm)",
         style=STYLE,
     ).ask()
-    if not tools:
-        return
+    if tools is None:
+        sys.exit(0)
     for tool in tools:
         tool_dir = project_dir / f".{tool}"
         tool_dir.mkdir(exist_ok=True)

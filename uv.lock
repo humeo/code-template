@@ -2,6 +2,12 @@ version = 1
 revision = 2
 requires-python = ">=3.12"
 
+[manifest]
+members = [
+    "code-template",
+    "ddd",
+]
+
 [[package]]
 name = "code-template"
 version = "0.1.0"
@@ -16,6 +22,11 @@ requires-dist = [
     { name = "questionary", specifier = ">=2.1.1" },
     { name = "rich", specifier = ">=14.3.3" },
 ]
+
+[[package]]
+name = "ddd"
+version = "0.1.0"
+source = { virtual = "ddd" }
 
 [[package]]
 name = "markdown-it-py"
