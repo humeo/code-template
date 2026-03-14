@@ -13,6 +13,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
+AI_TOOLS = ["claude", "codex"]
 
 console = Console()
 
@@ -41,6 +42,28 @@ def copy_template(template_dir: Path, dest: Path) -> None:
         elif not dst.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
+
+
+def setup_ai_dirs(project_dir: Path) -> None:
+    tools = questionary.checkbox(
+        "AI tool directories to create",
+        choices=AI_TOOLS,
+        instruction="(space to select, enter to confirm)",
+        style=STYLE,
+    ).ask()
+    if not tools:
+        return
+    for tool in tools:
+        tool_dir = project_dir / f".{tool}"
+        tool_dir.mkdir(exist_ok=True)
+        ignore = questionary.confirm(
+            f"Add .gitignore to .{tool}/ (ignore its contents)?",
+            default=True,
+            style=STYLE,
+        ).ask()
+        if ignore:
+            (tool_dir / ".gitignore").write_text("*\n")
+        console.print(f"  [green]✓[/green] .{tool}/ created" + (" [dim](ignored)[/dim]" if ignore else ""))
 
 
 def git_init_commit(project_dir: Path, lang: str) -> None:
@@ -145,6 +168,8 @@ def main() -> None:
 
     if lang in LANG_SETUP:
         LANG_SETUP[lang](project_dir)
+
+    setup_ai_dirs(project_dir)
 
     with console.status("[cyan]Initializing git...[/cyan]"):
         git_init_commit(project_dir, lang)
