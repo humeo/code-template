@@ -32,6 +32,7 @@ Interactive TUI that asks:
    - Go: `go mod init` with your module name
 
 Every project gets:
+
 - `.gitignore` tailored to the language
 - `.claude/.gitignore` (ignores all Claude local files)
 - Git initialized with an initial commit
